@@ -405,6 +405,10 @@ const server = createHttpServer(async (req, res) => {
     return;
   }
 
+  // Allow camera + mic on all responses (Railway proxy can strip these otherwise)
+  res.setHeader('Permissions-Policy', 'camera=(*), microphone=(*)');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+
   if (isProduction) {
     await serveProductionAsset(req, res);
     return;
