@@ -1386,12 +1386,26 @@ export default function App() {
     }
   }, []);
 
-  const handleLeadGateSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLeadGateSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canPassLeadGate) return;
 
     if (!stream) {
-      await requestCamera();
+      // Call getUserMedia synchronously within the user gesture — iOS Safari
+      // loses the gesture token if getUserMedia is reached via async/await hops.
+      setCameraError('');
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true },
+      })
+        .then((nextStream) => {
+          setIsCaptureReady(false);
+          setStream(nextStream);
+          setStage('READY');
+        })
+        .catch((err: unknown) => {
+          setCameraError(err instanceof Error ? err.message : 'Camera permission was denied.');
+        });
       return;
     }
 
